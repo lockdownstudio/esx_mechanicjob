@@ -10,6 +10,8 @@ Config.NPCSpawnDistance           = 500.0
 Config.NPCNextToDistance          = 25.0
 Config.NPCJobEarnings             = { min = 15, max = 40 }
 
+Config.Vehicles = {}
+
 Config.Zones = {
 
 	MechanicActions = {
@@ -20,55 +22,13 @@ Config.Zones = {
 	},
 }
 
-Config.Mechshop = {
+Config.Towables = {}
 
-	Mechhub = {
-
-		Vehicles = {
-			{
-				Spawner = vector3(996.5, -2333.2, 30.6),
-				InsideShop = vector3(947.4, -2352, 38.8),
-				SpawnPoints = {
-					{coords = vector3(989.4, -2346.8, 29.5), heading = 172.6, radius = 6.0},
-				}
-			}
-		}
+for k,v in ipairs(Config.Towables) do
+	Config.Zones['Towable' .. k] = {
+		Pos   = v,
+		Size  = { x = 1.5, y = 1.5, z = 1.0 },
+		Color = { r = 204, g = 204, b = 0 },
+		Type  = -1
 	}
-
-}
-
-Config.AuthorizedVehicles = {
-	car = {
-
-		train = {
-			{model = '17silverado', price = 1},
-			{model = 'flatbed3', price = 1},
-			{model = 'towtruck2', price = 1}
-		},
-
-		junior = {
-			{model = '17silverado', price = 1},
-			{model = 'flatbed3', price = 1},
-			{model = 'towtruck2', price = 1}
-		},
-
-		senior = {
-			{model = '17silverado', price = 1},
-			{model = 'flatbed3', price = 1},
-			{model = 'towtruck2', price = 1}
-		},
-
-		supervisor = {
-			{model = '17silverado', price = 1},
-			{model = 'flatbed3', price = 1},
-			{model = 'towtruck2', price = 1}
-		},
-
-		boss = {
-			{model = '17silverado', price = 1},
-			{model = 'flatbed3', price = 1},
-			{model = 'towtruck2', price = 1},
-			{model = 'towtruck', price = 1}
-		}
-	}
-}
+end
