@@ -2,6 +2,7 @@ ESX                = nil
 PlayersHarvesting  = {}
 PlayersHarvesting2 = {}
 PlayersHarvesting3 = {}
+PlayersHarvesting4 = {}
 PlayersCrafting    = {}
 PlayersCrafting2   = {}
 PlayersCrafting3   = {}
