@@ -600,6 +600,7 @@ AddEventHandler('esx_mechanicjob:hasExitedMarker', function(zone)
 		TriggerServerEvent('esx_mechanicjob:stopHarvest')
 		TriggerServerEvent('esx_mechanicjob:stopHarvest2')
 		TriggerServerEvent('esx_mechanicjob:stopHarvest3')
+		TriggerServerEvent('esx_mechanicjob:stopHarvest4')
 	end
 
 	CurrentAction = nil

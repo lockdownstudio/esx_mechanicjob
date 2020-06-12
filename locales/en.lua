@@ -19,6 +19,7 @@ Locales['en'] = {
   ['gas_can']                   = 'gas Can',
   ['repair_tools']              = 'repair Tools',
   ['body_work_tools']           = 'bodywork Tools',
+  ['mobile_repair_tools']       = 'Mobile Repair Tools',
   ['blowtorch']                 = 'blowtorch',
   ['repair_kit']                = 'repair Kit',
   ['body_kit']                  = 'body Kit',

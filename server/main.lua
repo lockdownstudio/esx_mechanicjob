@@ -110,6 +110,37 @@ AddEventHandler('esx_mechanicjob:stopHarvest3', function()
 	PlayersHarvesting3[_source] = false
 end)
 
+local function Harvest4(source)	
+	SetTimeout(4000, function()	
+
+			if PlayersHarvesting4[source] == true then	
+					local xPlayer = ESX.GetPlayerFromId(source)	
+					local CaroToolQuantity = xPlayer.getInventoryItem('carotool').count	
+					if CaroToolQuantity >= 5 then	
+							TriggerClientEvent('esx:showNotification', source, _U('you_do_not_room'))	
+					else	
+							xPlayer.addInventoryItem('toolbox', 1)	
+							Harvest4(source)	
+					end	
+			end	
+
+	end)	
+end	
+
+RegisterServerEvent('esx_mechanicjob:startHarvest4')	
+AddEventHandler('esx_mechanicjob:startHarvest4', function()	
+	local _source = source	
+	PlayersHarvesting4[_source] = true	
+	TriggerClientEvent('esx:showNotification', _source, _U('mobile_repair_tools'))	
+	Harvest3(_source)	
+end)	
+
+RegisterServerEvent('esx_mechanicjob:stopHarvest4')	
+AddEventHandler('esx_mechanicjob:stopHarvest4', function()	
+	local _source = source	
+	PlayersHarvesting4[_source] = false	
+end)	
+
 local function Craft(source)
 	SetTimeout(4000, function()
 
