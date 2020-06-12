@@ -66,7 +66,7 @@ function StopNPCJob(cancel)
 	else
 		--TriggerServerEvent('esx_mechanicjob:onNPCJobCompleted')
 	end
-end -]]
+end
 
 function OpenMechanicActionsMenu()
 	local elements = {
@@ -88,7 +88,7 @@ function OpenMechanicActionsMenu()
 		align    = 'top-left',
 		elements = elements
 	}, function(data, menu)
-			if data.current.value == 'vehicle_list' then							-- Disabled garages (to be replaced by advanced garage)
+			if data.current.value == 'vehicle_list' then							
 			if Config.EnableSocietyOwnedVehicles then
 
 				local elements = {}
@@ -164,7 +164,7 @@ function OpenMechanicActionsMenu()
 				end)
 
 			end
-		if data.current.value == 'cloakroom' then
+		elseif data.current.value == 'cloakroom' then
 			menu.close()
 			ESX.TriggerServerCallback('esx_skin:getPlayerSkin', function(skin, jobSkin)
 				if skin.sex == 0 then
