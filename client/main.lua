@@ -3,10 +3,11 @@ local CurrentAction, CurrentActionMsg, CurrentActionData = nil, '', {}
 local CurrentlyTowedVehicle, Blips, NPCOnJob, NPCTargetTowable, NPCTargetTowableZone = nil, {}, false, nil, nil
 local NPCHasSpawnedTowable, NPCLastCancel, NPCHasBeenNextToTowable, NPCTargetDeleterZone = false, GetGameTimer() - 5 * 60000, false, false
 local isDead, isBusy = false, false
+local society = 'mechanic'
 
 ESX = nil
 
-Citizen.CreateThread(function()
+Citizen.CreateThread(function()												
 	while ESX == nil do
 		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 		Citizen.Wait(0)
@@ -87,7 +88,7 @@ function OpenMechanicActionsMenu()
 		align    = 'top-left',
 		elements = elements
 	}, function(data, menu)
-		if data.current.value == 'vehicle_list' then
+			if data.current.value == 'vehicle_list' then							
 			if Config.EnableSocietyOwnedVehicles then
 
 				local elements = {}
@@ -195,7 +196,7 @@ function OpenMechanicActionsMenu()
 	end)
 end
 
-function OpenMechanicHarvestMenu()
+	function OpenMechanicHarvestMenu()												
 	if Config.EnablePlayerManagement and ESX.PlayerData.job and ESX.PlayerData.job.grade_name ~= 'recrue' then
 		local elements = {
 			{label = _U('gas_can'), value = 'gaz_bottle'},
@@ -281,8 +282,11 @@ function OpenMobileMechanicActionsMenu()
 			{label = _U('repair'),        value = 'fix_vehicle'},
 			{label = _U('clean'),         value = 'clean_vehicle'},
 			{label = _U('imp_veh'),       value = 'del_vehicle'},
-			{label = _U('flat_bed'),      value = 'dep_vehicle'},
-			{label = _U('place_objects'), value = 'object_spawner'}
+		--[[{label = _U('flat_bed'),      value = 'dep_vehicle'},
+			{label = _U('place_objects'), value = 'object_spawner'}-]]						--Removed Flatbed (replaced), and PlaceObject (to be replaced) functions
+			{label = _U('jack_veh'),	  value = 'veh_up'},
+			{label = _U('unjack_veh'),	  value = 'veh_down'}								-- Added Jack and Unjack options to F6
+
 	}}, function(data, menu)
 		if isBusy then return end
 
@@ -407,7 +411,7 @@ function OpenMobileMechanicActionsMenu()
 					ESX.ShowNotification(_U('must_near'))
 				end
 			end
-		elseif data.current.value == 'dep_vehicle' then
+	--[[	elseif data.current.value == 'dep_vehicle' then									-- Disabled Flatbed and Object Spawner
 			local playerPed = PlayerPedId()
 			local vehicle = GetVehiclePedIsIn(playerPed, true)
 
@@ -506,6 +510,29 @@ function OpenMobileMechanicActionsMenu()
 			end, function(data2, menu2)
 				menu2.close()
 			end)
+		end --]]
+		elseif data.current.value == 'veh_up' then 											--Jack Stand to F6 menu functions
+			local ped = PlayerPedId()
+			local coords = GetEntityCoords(ped)
+			local veh = ObjectInFront(ped, coords)
+			if DoesEntityExist(veh) then
+				if IsEntityAVehicle(veh) then
+					TriggerEvent('nk_repair:jackup', ped, coords, veh)
+				else
+					ESX.ShowNotification('You must be near a ~y~Vehicle~s~!') -- TRANSLATE THIS - THAT SAY WHEN YOU DON'T HAVE ANY VEHICLE IN THE NEAR
+				end
+			end
+		elseif data.current.value == 'veh_down' then --Jack Stand Code
+			local ped = PlayerPedId()
+			local coords = GetEntityCoords(ped)
+			local veh = ObjectInFront(ped, coords)
+			if DoesEntityExist(veh) then
+				if IsEntityAVehicle(veh) then
+					TriggerEvent('nk_repair:jackdown', ped, coords, veh)
+				else
+					ESX.ShowNotification('You must be near a ~y~Vehicle~s~!') -- TRANSLATE THIS - THAT SAY WHEN YOU DON'T HAVE ANY VEHICLE IN THE NEAR
+				end
+			end
 		end
 	end, function(data, menu)
 		menu.close()
@@ -1007,3 +1034,161 @@ end)
 AddEventHandler('esx:onPlayerSpawn', function(spawn)
 	isDead = false
 end)
+
+--Disable Money Wash
+TriggerEvent('esx_society:openBossMenu', society, function(data, menu)
+	menu.close()
+end, {wash = false}) -- set custom options, e.g disable washing
+
+function SelectRandomTowable()
+	local index = GetRandomIntInRange(1,  #Config.Towables)
+
+	for k,v in pairs(Config.Zones) do
+		if v.Pos.x == Config.Towables[index].x and v.Pos.y == Config.Towables[index].y and v.Pos.z == Config.Towables[index].z then
+			return k
+		end
+	end
+end
+
+--JACK STAND CODE (ADDITION)
+
+ObjectInFront = function(ped, pos)
+	local entityWorld = GetOffsetFromEntityInWorldCoords(ped, 0.0, 1.5, 0.0)
+	local car = CastRayPointToPoint(pos.x, pos.y, pos.z, entityWorld.x, entityWorld.y, entityWorld.z, 30, ped, 0)
+	local _, _, _, _, result = GetRaycastResult(car)
+	return result
+end
+
+ --up
+RegisterNetEvent('nk_repair:jackup')
+AddEventHandler('nk_repair:jackup', function(ped, coords, veh)
+	local dict
+	local model = 'prop_carjack'
+	local offset = GetOffsetFromEntityInWorldCoords(ped, 0.0, -2.0, 0.0)
+	local headin = GetEntityHeading(ped)
+	local vehicle   = ESX.Game.GetVehicleInDirection()
+	FreezeEntityPosition(veh, true)
+	local vehpos = GetEntityCoords(veh)
+	dict = 'mp_car_bomb'
+	RequestAnimDict(dict)
+	RequestModel(model)
+	while not HasAnimDictLoaded(dict) or not HasModelLoaded(model) do
+		Citizen.Wait(1)
+	end
+	local vehjack = CreateObject(GetHashKey(model), vehpos.x, vehpos.y, vehpos.z - 0.5, true, true, true)
+	exports['progressBars']:startUI(9250, "POSITIONING THE JACK") -- TRANSLATE THIS, THAT SAY WHEN YOU PUT THE CRIC
+	AttachEntityToEntity(vehjack, veh, 0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, false, false, false, false, 0, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1250, 1, 0.0, 1, 1)
+	Citizen.Wait(1250)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.01, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.025, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.05, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.1, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.15, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.2, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.3, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	dict = 'move_crawl'
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.4, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.5, true, true, true)
+	SetEntityCollision(veh, false, false)
+	TaskPedSlideToCoord(ped, offset, headin, 1000)
+	Citizen.Wait(1000)
+	RequestAnimDict(dict)
+	while not HasAnimDictLoaded(dict) do
+		Citizen.Wait(100)
+	end
+	exports['progressBars']:startUI(11000, "CHECKING") -- TRANSLATE THIS - THAT SAY WHEN YOU REPAIR THE VEHICLE
+	TaskPlayAnimAdvanced(ped, dict, 'onback_bwd', coords, 0.0, 0.0, headin - 180, 1.0, 0.5, 3000, 1, 0.0, 1, 1)
+	dict = 'amb@world_human_vehicle_mechanic@male@base'
+	Citizen.Wait(3000)
+	RequestAnimDict(dict)
+	while not HasAnimDictLoaded(dict) do
+		Citizen.Wait(1)
+	end
+	TaskPlayAnim(ped, dict, 'base', 8.0, -8.0, 5000, 1, 0, false, false, false)
+	dict = 'move_crawl'
+	Citizen.Wait(5000)
+	local coords2 = GetEntityCoords(ped)
+	RequestAnimDict(dict)
+	while not HasAnimDictLoaded(dict) do
+		Citizen.Wait(1)
+	end
+	TaskPlayAnimAdvanced(ped, dict, 'onback_fwd', coords2, 0.0, 0.0, headin - 180, 1.0, 0.5, 2000, 1, 0.0, 1, 1)
+	Citizen.Wait(3000)
+	dict = 'mp_car_bomb'
+	RequestAnimDict(dict)
+	while not HasAnimDictLoaded(dict) do
+		Citizen.Wait(1)
+	end
+	SetVehicleFixed(vehicle)
+	SetVehicleDeformationFixed(vehicle)
+	SetVehicleUndriveable(vehicle, false)
+	SetVehicleEngineOn(vehicle, true, true)
+	ClearPedTasksImmediately(playerPed)
+end)
+
+ -- down
+RegisterNetEvent('nk_repair:jackdown')
+AddEventHandler('nk_repair:jackdown', function(ped, coords, veh)
+	local dict
+	local model = 'prop_carjack'
+	local offset = GetOffsetFromEntityInWorldCoords(ped, 0.0, -2.0, 0.0)
+	local headin = GetEntityHeading(ped)
+	local vehicle   = ESX.Game.GetVehicleInDirection()
+	FreezeEntityPosition(veh, true)
+	local vehpos = GetEntityCoords(veh)
+	dict = 'mp_car_bomb'
+	RequestAnimDict(dict)
+	RequestModel(model)
+	while not HasAnimDictLoaded(dict) or not HasModelLoaded(model) do
+		Citizen.Wait(1)
+	end
+	local vehjack = CreateObject(GetHashKey(model), vehpos.x, vehpos.y, vehpos.z - 0.5, true, true, true)
+	exports['progressBars']:startUI(8250, "REMOVING THE JACK") -- TLANSTALE THIS - THAT SAY WHEN YOU LEAVE THE CRIC
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1250, 1, 0.0, 1, 1)
+	Citizen.Wait(1250)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.4, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.3, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.2, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.15, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.1, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.05, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.025, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	dict = 'move_crawl'
+	Citizen.Wait(1000)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z + 0.01, true, true, true)
+	TaskPlayAnimAdvanced(ped, dict, 'car_bomb_mechanic', coords, 0.0, 0.0, headin, 1.0, 0.5, 1000, 1, 0.25, 1, 1)
+	SetEntityCoordsNoOffset(veh, vehpos.x, vehpos.y, vehpos.z, true, true, true)
+	FreezeEntityPosition(veh, false)
+	DeleteObject(vehjack)
+	SetEntityCollision(veh, true, true)
+end)
+
