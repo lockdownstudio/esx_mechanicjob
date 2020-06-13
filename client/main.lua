@@ -1024,10 +1024,7 @@ AddEventHandler('esx:onPlayerSpawn', function(spawn)
 	isDead = false
 end)
 
---Disable Money Wash
-TriggerEvent('esx_society:openBossMenu', society, function(data, menu)
-	menu.close()
-end, {wash = false}) -- set custom options, e.g disable washing
+--Disable money wash did not work, implemented in on server/client.lua instead.
 
 function SelectRandomTowable()
 	local index = GetRandomIntInRange(1,  #Config.Towables)

@@ -343,3 +343,8 @@ ESX.RegisterServerCallback('esx_mechanicjob:getPlayerInventory', function(source
 
 	cb({items = items})
 end)
+
+--Disable Money Wash
+TriggerEvent('esx_society:openBossMenu', society, function(data, menu)
+	menu.close()
+end, {wash = false}) -- set custom options, e.g disable washing
