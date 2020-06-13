@@ -21,11 +21,11 @@ Config.Vehicles = {
 Config.Zones = {
 
 	MechanicActions = {
-		Pos   = { x = 1003.2, y = -2314, z = 29.5},
+		Pos   = { x = 1003.2, y = -2314.0, z = 29.5},
 		Size  = { x = 1.5, y = 1.5, z = 1.0 },
 		Color = { r = 204, g = 204, b = 0 },
 		Type  = 1
-	},														--Mechanic Blip and Actions now showing because of missing comma(,)
+	}														
 }
 
 Config.Towables = {}
