@@ -1135,10 +1135,8 @@ AddEventHandler('nk_repair:jackup', function(ped, coords, veh)
 	while not HasAnimDictLoaded(dict) do
 		Citizen.Wait(1)
 	end
-	SetVehicleFixed(vehicle)
-	SetVehicleDeformationFixed(vehicle)
-	SetVehicleUndriveable(vehicle, false)
-	SetVehicleEngineOn(vehicle, true, true)
+	FreezeEntityPosition(veh, false)
+	SetEntityCollision(veh, true, true)
 	ClearPedTasksImmediately(playerPed)
 end)
 
