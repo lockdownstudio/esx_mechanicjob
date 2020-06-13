@@ -84,6 +84,6 @@ Locales['en'] = {
   ['have_deposited']            = 'you have deposited ~y~x%s~s~ ~b~%s~s~',
   ['player_cannot_hold']        = 'you do ~r~not~s~ have enough ~y~free space~s~ in your inventory!',
   -- Vehicle Jack
-  ['jack_veh']                  = 'Raise vehicle',
-  ['unjack_veh']                = 'Lower vehicle',
+  ['jack_repair']               = 'Jack Repair',
+  
 }
