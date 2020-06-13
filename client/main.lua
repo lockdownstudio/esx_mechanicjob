@@ -69,7 +69,7 @@ end
 
 function OpenMechanicActionsMenu()
 	local elements = {
-	 -[[{label = _U('vehicle_list'),   value = 'vehicle_list'},-]]					-- Disabled Vehicle List from Mechanic Menu
+	 --[[{label = _U('vehicle_list'),   value = 'vehicle_list'},-]]					-- Disabled Vehicle List from Mechanic Menu
 		{label = _U('work_wear'),      value = 'cloakroom'},
 		{label = _U('civ_wear'),       value = 'cloakroom2'},
 		{label = _U('deposit_stock'),  value = 'put_stock'},
