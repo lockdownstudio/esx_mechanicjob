@@ -3,7 +3,6 @@ local CurrentAction, CurrentActionMsg, CurrentActionData = nil, '', {}
 local CurrentlyTowedVehicle, Blips, NPCOnJob, NPCTargetTowable, NPCTargetTowableZone = nil, {}, false, nil, nil
 local NPCHasSpawnedTowable, NPCLastCancel, NPCHasBeenNextToTowable, NPCTargetDeleterZone = false, GetGameTimer() - 5 * 60000, false, false
 local isDead, isBusy = false, false
-local society = 'mechanic'
 
 ESX = nil
 
@@ -185,7 +184,7 @@ function OpenMechanicActionsMenu()
 		elseif data.current.value == 'boss_actions' then
 			TriggerEvent('esx_society:openBossMenu', 'mechanic', function(data, menu)
 				menu.close()
-			end)
+			end), {wash = false}) -- set custom options, e.g disable washing
 		end
 	end, function(data, menu)
 		menu.close()
@@ -519,7 +518,7 @@ function OpenMobileMechanicActionsMenu()
 				if IsEntityAVehicle(veh) then
 					TriggerEvent('nk_repair:JackRepair', ped, coords, veh)
 				else
-					ESX.ShowNotificatHAHAHAion('You must be near a ~y~Vehicle~s~!') -- TRANSLATE THIS - THAT SAY WHEN YOU DON'T HAVE ANY VEHICLE IN THE NEAR
+					ESX.ShowNotification('You must be near a ~y~Vehicle~s~!') -- TRANSLATE THIS - THAT SAY WHEN YOU DON'T HAVE ANY VEHICLE IN THE NEAR
 				end
 			end
 		end
@@ -1023,8 +1022,6 @@ end)
 AddEventHandler('esx:onPlayerSpawn', function(spawn)
 	isDead = false
 end)
-
---Disable money wash did not work, implemented in on server/client.lua instead.
 
 function SelectRandomTowable()
 	local index = GetRandomIntInRange(1,  #Config.Towables)
