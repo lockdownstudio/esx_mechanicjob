@@ -184,7 +184,7 @@ function OpenMechanicActionsMenu()
 		elseif data.current.value == 'boss_actions' then
 			TriggerEvent('esx_society:openBossMenu', 'mechanic', function(data, menu)
 				menu.close()
-			end), {wash = false}) -- set custom options, e.g disable washing
+			end, {wash = false}) -- set custom options, e.g disable washing -- set custom options, e.g disable washing
 		end
 	end, function(data, menu)
 		menu.close()
