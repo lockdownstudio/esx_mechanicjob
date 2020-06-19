@@ -27,3 +27,5 @@ SET salary =
     where grade IN (
         0, 1, 2, 3, 4
     );
+
+UPDATE `jobs` SET label = 'Mechanic' WHERE name = 'mechanic';
