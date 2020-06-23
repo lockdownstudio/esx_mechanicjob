@@ -1052,28 +1052,30 @@ Citizen.CreateThread(function()
 	end
 end)
 
---Veh Enter/Exit Marker events
-if isInMarker and not HasAlreadyEnteredMarker or (isInMarker and (LastStation ~= currentStation or LastPart ~= currentPart or LastPartNum ~= currentPartNum)) then
-	if
-		(LastStation and LastPart and LastPartNum) and
-		(LastStation ~= currentStation or LastPart ~= currentPart or LastPartNum ~= currentPartNum)
-	then
-		TriggerEvent('esx_mechanicjob:hasExitedvehMarker', LastStation, LastPart, LastPartNum)
-		hasExited = true
+Citizen.CreateThread(function()
+	--Veh Enter/Exit Marker events
+	if isInMarker and not HasAlreadyEnteredMarker or (isInMarker and (LastStation ~= currentStation or LastPart ~= currentPart or LastPartNum ~= currentPartNum)) then
+		if
+			(LastStation and LastPart and LastPartNum) and
+			(LastStation ~= currentStation or LastPart ~= currentPart or LastPartNum ~= currentPartNum)
+		then
+			TriggerEvent('esx_mechanicjob:hasExitedvehMarker', LastStation, LastPart, LastPartNum)
+			hasExited = true
+		end
+
+		HasAlreadyEnteredMarker = true
+		LastStation             = currentStation
+		LastPart                = currentPart
+		LastPartNum             = currentPartNum
+
+		TriggerEvent('esx_mechanicjob:hasEnteredvehMarker', currentStation, currentPart, currentPartNum)
 	end
 
-	HasAlreadyEnteredMarker = true
-	LastStation             = currentStation
-	LastPart                = currentPart
-	LastPartNum             = currentPartNum
-
-	TriggerEvent('esx_mechanicjob:hasEnteredvehMarker', currentStation, currentPart, currentPartNum)
-end
-
-if not hasExited and not isInMarker and HasAlreadyEnteredMarker then
-	HasAlreadyEnteredMarker = false
-	TriggerEvent('esx_mechanicjob:hasExitedvehMarker', LastStation, LastPart, LastPartNum)
-end
+	if not hasExited and not isInMarker and HasAlreadyEnteredMarker then
+		HasAlreadyEnteredMarker = false
+		TriggerEvent('esx_mechanicjob:hasExitedvehMarker', LastStation, LastPart, LastPartNum)
+	end
+end)
 
 -- Veh Key Controls
 Citizen.CreateThread(function()

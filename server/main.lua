@@ -373,7 +373,7 @@ ESX.RegisterServerCallback('esx_mechanicjob:buyJobVehicle', function(source, cb,
 	end
 end)
 
-ESX.RegisterServerCallback('esx_nechanicjobt:storeNearbyVehicle', function(source, cb, nearbyVehicles)
+ESX.RegisterServerCallback('esx_mechanicjob:storeNearbyVehicle', function(source, cb, nearbyVehicles)
 	local xPlayer = ESX.GetPlayerFromId(source)
 	local foundPlate, foundNum
 
