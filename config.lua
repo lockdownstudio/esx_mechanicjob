@@ -85,22 +85,26 @@ Config.Stations = {
 
 	Main = {
 		
+		VehicleDeleters = {
+			vector3(989.5, -2344.9, 30.5)
+		},	
+
 		Vehicles = {
 			{
-				Spawner = vector3(996.8, -2332.5, 29.6),
-				InsideShop = vector3(950.2, -2348.1, 38.8),
+				Spawner = vector3(990.79, -2331.96, 30.51),
+				InsideShop = vector3(990.79, -2331.96, 30.51),
 				SpawnPoints = {
-					{coords = vector3(989.5, -2344.9, 29.5), heading = 170.66, radius = 6.0},
+					{coords = vector3(989.5, -2344.9, 29.5), heading = 174.41, radius = 6.0}
 				}
 			},
 		},
 	
 		Helicopters = {
 			{
-				Spawner = vector3(997.7, -2361.2, 34.6),
-				InsideShop = vector3(1012.5, -2358.9, 36.1),
+				Spawner = vector3(1012.34, -2358.74, 38.08),
+				InsideShop = vector3(1012.34, -2358.74, 35.08),
 				SpawnPoints = {
-					{coords = vector3(1012.5, -2358.9, 36.1), heading = 263.42, radius = 10.0}
+					{coords = vector3(1012.34, -2358.74, 37.08), heading = 254.35, radius = 10.0}
 				}
 			}
 		}

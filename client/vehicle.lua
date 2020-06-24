@@ -185,7 +185,7 @@ function StoreNearbyVehicle(playerCoords)
 end
 
 function GetAvailableVehicleSpawnPoint(station, part, partNum)
-	local spawnPoints = Config.Station[station][part][partNum].SpawnPoints
+	local spawnPoints = Config.Stations[station][part][partNum].SpawnPoints
 	local found, foundSpawnPoint = false, nil
 
 	for i=1, #spawnPoints, 1 do
