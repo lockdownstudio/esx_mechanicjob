@@ -85,9 +85,7 @@ Config.Stations = {
 
 	Main = {
 		
-		VehicleDeleters = {
-			vector3(989.5, -2344.9, 30.5)
-		},	
+		VehicleDeleters = {},	
 
 		Vehicles = {
 			{

@@ -3,7 +3,7 @@ local CurrentAction, CurrentActionMsg, CurrentActionData = nil, '', {}
 local CurrentlyTowedVehicle, Blips, NPCOnJob, NPCTargetTowable, NPCTargetTowableZone = nil, {}, false, nil, nil
 local NPCHasSpawnedTowable, NPCLastCancel, NPCHasBeenNextToTowable, NPCTargetDeleterZone = false, GetGameTimer() - 5 * 60000, false, false
 local isDead, isBusy, canShow = false, false, true --"canShow" is for Skylift Script
-local LastStation, LastPart, LastPartNum
+local LastStation, LastPart, LastPartNum = nil, nil, nil
 local isInShopMenu = false
 
 local Keys = {
@@ -736,7 +736,7 @@ AddEventHandler('esx:setJob', function(job)
 	ESX.PlayerData.job = job
 end)
 
-AddEventHandler('esx_mechanicjob:hasEnteredMarker', function(zone)
+AddEventHandler('esx_mechanicjob:hasEnteredMarker', function(zone, station, part, partNum)
 	if zone == 'NPCJobTargetTowable' then
 
 	elseif zone =='VehicleDelivery' then
@@ -764,27 +764,20 @@ AddEventHandler('esx_mechanicjob:hasEnteredMarker', function(zone)
 			CurrentActionData = {vehicle = vehicle}
 		end
 	end
+
+	if part == 'Vehicles' then
+        CurrentAction     = 'menu_vehicle_spawner'
+        CurrentActionMsg  = _U('vehicle_spawner')
+        CurrentActionData = { station = station, part = part, partNum = partNum }
+
+    elseif part == 'Helicopters' then
+        CurrentAction     = 'Helicopters'
+        CurrentActionMsg  = _U('helicopter_prompt')
+        CurrentActionData = { station = station, part = part, partNum = partNum }        
+    end
 end)
 
-AddEventHandler('esx_mechanicjob:hasExitedMarker', function(zone)
-	if zone =='VehicleDelivery' then
-		NPCTargetDeleterZone = false
-	elseif zone == 'Craft' then
-		TriggerServerEvent('esx_mechanicjob:stopCraft')
-		TriggerServerEvent('esx_mechanicjob:stopCraft2')
-		TriggerServerEvent('esx_mechanicjob:stopCraft3')
-	elseif zone == 'Garage' then
-		TriggerServerEvent('esx_mechanicjob:stopHarvest')
-		TriggerServerEvent('esx_mechanicjob:stopHarvest2')
-		TriggerServerEvent('esx_mechanicjob:stopHarvest3')
-		TriggerServerEvent('esx_mechanicjob:stopHarvest4')
-	end
-
-	CurrentAction = nil
-	ESX.UI.Menu.CloseAll()
-end)
-
---VehScripts
+--[[VehScripts
 AddEventHandler('esx_mechanicjob:hasEnteredvehMarker', function(station, part, partNum)
  
     if part == 'Vehicles' then
@@ -814,18 +807,29 @@ AddEventHandler('esx_mechanicjob:hasEnteredvehMarker', function(station, part, p
     end
 	
 end)
+--]]
 
-AddEventHandler('esx_mechanicjob:hasExitedvehMarker', function(station, part, partNum)
+AddEventHandler('esx_mechanicjob:hasExitedMarker', function(zone)
+	if zone =='VehicleDelivery' then
+		NPCTargetDeleterZone = false
+	elseif zone == 'Craft' then
+		TriggerServerEvent('esx_mechanicjob:stopCraft')
+		TriggerServerEvent('esx_mechanicjob:stopCraft2')
+		TriggerServerEvent('esx_mechanicjob:stopCraft3')
+	elseif zone == 'Garage' then
+		TriggerServerEvent('esx_mechanicjob:stopHarvest')
+		TriggerServerEvent('esx_mechanicjob:stopHarvest2')
+		TriggerServerEvent('esx_mechanicjob:stopHarvest3')
+		TriggerServerEvent('esx_mechanicjob:stopHarvest4')
+	end
 
-  if not isInShopMenu then
+	if not isInShopMenu then
 		ESX.UI.Menu.CloseAll()
 	end
 
-  CurrentAction = nil
-  
+	CurrentAction = nil
+	ESX.UI.Menu.CloseAll()
 end)
-
---End of vehscripts
 
 AddEventHandler('esx_mechanicjob:hasEnteredEntityZone', function(entity)
 	local playerPed = PlayerPedId()
@@ -991,13 +995,14 @@ Citizen.CreateThread(function()
 				LastStation             = currentStation
 				LastPart                = currentPart
 				LastPartNum             = currentPartNum
+				LastZone				= nil
 
-				TriggerEvent('esx_mechanicjob:hasEnteredvehMarker', currentStation, currentPart, currentPartNum)
+				TriggerEvent('esx_mechanicjob:hasEnteredMarker', LastZone, currentStation, currentPart, currentPartNum)
 			end
 
 			if not hasExited and not isInMarker and HasAlreadyEnteredvehMarker then
 				HasAlreadyEnteredvehMarker = false
-				TriggerEvent('esx_mechanicjob:hasExitedvehMarker', LastStation, LastPart, LastPartNum)
+				TriggerEvent('esx_mechanicjob:hasExitedMarker', LastZone, LastStation, LastPart, LastPartNum)
 			end
 		end        
 	end
