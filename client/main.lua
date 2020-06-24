@@ -1,8 +1,22 @@
-local HasAlreadyEnteredMarker, LastZone = false, nil
+local HasAlreadyEnteredMarker, HasAlreadyEnteredvehMarker LastZone = false, false, nil
 local CurrentAction, CurrentActionMsg, CurrentActionData = nil, '', {}
 local CurrentlyTowedVehicle, Blips, NPCOnJob, NPCTargetTowable, NPCTargetTowableZone = nil, {}, false, nil, nil
 local NPCHasSpawnedTowable, NPCLastCancel, NPCHasBeenNextToTowable, NPCTargetDeleterZone = false, GetGameTimer() - 5 * 60000, false, false
-local isDead, isBusy = false, false
+local isDead, isBusy, canShow = false, false, true --"canShow" is for Skylift Script
+local LastStation, LastPart, LastPartNum = nil, nil, nil
+local isInShopMenu = false
+
+local Keys = {
+	["ESC"] = 322, ["F1"] = 288, ["F2"] = 289, ["F3"] = 170, ["F5"] = 166, ["F6"] = 167, ["F7"] = 168, ["F8"] = 169, ["F9"] = 56, ["F10"] = 57,
+	["~"] = 243, ["1"] = 157, ["2"] = 158, ["3"] = 160, ["4"] = 164, ["5"] = 165, ["6"] = 159, ["7"] = 161, ["8"] = 162, ["9"] = 163, ["-"] = 84, ["="] = 83, ["BACKSPACE"] = 177,
+	["TAB"] = 37, ["Q"] = 44, ["W"] = 32, ["E"] = 38, ["R"] = 45, ["T"] = 245, ["Y"] = 246, ["U"] = 303, ["P"] = 199, ["["] = 39, ["]"] = 40, ["ENTER"] = 18,
+	["CAPS"] = 137, ["A"] = 34, ["S"] = 8, ["D"] = 9, ["F"] = 23, ["G"] = 47, ["H"] = 74, ["K"] = 311, ["L"] = 182,
+	["LEFTSHIFT"] = 21, ["Z"] = 20, ["X"] = 73, ["C"] = 26, ["V"] = 0, ["B"] = 29, ["N"] = 249, ["M"] = 244, [","] = 82, ["."] = 81,
+	["LEFTCTRL"] = 36, ["LEFTALT"] = 19, ["SPACE"] = 22, ["RIGHTCTRL"] = 70,
+	["HOME"] = 213, ["PAGEUP"] = 10, ["PAGEDOWN"] = 11, ["DELETE"] = 178,
+	["LEFT"] = 174, ["RIGHT"] = 175, ["TOP"] = 27, ["DOWN"] = 173,
+	["NENTER"] = 201, ["N4"] = 108, ["N5"] = 60, ["N6"] = 107, ["N+"] = 96, ["N-"] = 97, ["N7"] = 117, ["N8"] = 61, ["N9"] = 118
+  }
 
 ESX = nil
 
@@ -722,7 +736,7 @@ AddEventHandler('esx:setJob', function(job)
 	ESX.PlayerData.job = job
 end)
 
-AddEventHandler('esx_mechanicjob:hasEnteredMarker', function(zone)
+AddEventHandler('esx_mechanicjob:hasEnteredMarker', function(zone, station, part, partNum)
 	if zone == 'NPCJobTargetTowable' then
 
 	elseif zone =='VehicleDelivery' then
@@ -750,9 +764,52 @@ AddEventHandler('esx_mechanicjob:hasEnteredMarker', function(zone)
 			CurrentActionData = {vehicle = vehicle}
 		end
 	end
+
+	if part == 'Vehicles' then
+        CurrentAction     = 'menu_vehicle_spawner'
+        CurrentActionMsg  = _U('vehicle_spawner')
+        CurrentActionData = { station = station, part = part, partNum = partNum }
+
+    elseif part == 'Helicopters' then
+        CurrentAction     = 'Helicopters'
+        CurrentActionMsg  = _U('helicopter_prompt')
+        CurrentActionData = { station = station, part = part, partNum = partNum }        
+    end
 end)
 
-AddEventHandler('esx_mechanicjob:hasExitedMarker', function(zone)
+--[[VehScripts
+AddEventHandler('esx_mechanicjob:hasEnteredvehMarker', function(station, part, partNum)
+ 
+    if part == 'Vehicles' then
+        CurrentAction     = 'menu_vehicle_spawner'
+        CurrentActionMsg  = _U('vehicle_spawner')
+        CurrentActionData = { station = station, part = part, partNum = partNum }
+
+    elseif part == 'Helicopters' then
+        CurrentAction     = 'Helicopters'
+        CurrentActionMsg  = _U('helicopter_prompt')
+        CurrentActionData = { station = station, part = part, partNum = partNum }        
+    end
+
+    if part == 'VehicleDeleters' then
+
+      local playerPed = GetPlayerPed(-1)
+
+      if IsPedInAnyVehicle(playerPed,  false) then
+
+        local vehicle = GetVehiclePedIsIn(playerPed,  false)
+
+        CurrentAction     = 'delete_vehicle'
+        CurrentActionMsg  = _U('store_vehicle')
+        CurrentActionData = {vehicle = vehicle}
+      end
+
+    end
+	
+end)
+--]]
+
+AddEventHandler('esx_mechanicjob:hasExitedMarker', function(zone, station, part, partNum)
 	if zone =='VehicleDelivery' then
 		NPCTargetDeleterZone = false
 	elseif zone == 'Craft' then
@@ -764,6 +821,10 @@ AddEventHandler('esx_mechanicjob:hasExitedMarker', function(zone)
 		TriggerServerEvent('esx_mechanicjob:stopHarvest2')
 		TriggerServerEvent('esx_mechanicjob:stopHarvest3')
 		TriggerServerEvent('esx_mechanicjob:stopHarvest4')
+	end
+
+	if not isInShopMenu then
+		ESX.UI.Menu.CloseAll()
 	end
 
 	CurrentAction = nil
@@ -851,6 +912,7 @@ Citizen.CreateThread(function()
 
 		if ESX.PlayerData.job and ESX.PlayerData.job.name == 'mechanic' then
 			local coords, letSleep = GetEntityCoords(PlayerPedId()), true
+			local isInMarker, hasExited = false, false
 
 			for k,v in pairs(Config.Zones) do
 				if v.Type ~= -1 and GetDistanceBetweenCoords(coords, v.Pos.x, v.Pos.y, v.Pos.z, true) < Config.DrawDistance then
@@ -865,6 +927,84 @@ Citizen.CreateThread(function()
 		else
 			Citizen.Wait(500)
 		end
+	end
+end)
+
+-- Display markers for vehicles
+Citizen.CreateThread(function()
+	while true do
+		Citizen.Wait(0)
+
+		if ESX.PlayerData.job and ESX.PlayerData.job.name == 'mechanic' then
+			local playerPed = PlayerPedId()
+			local playerCoords = GetEntityCoords(playerPed)
+			local isInMarker, hasExited, letSleep = false, false, true
+			local currentStation, currentPart, currentPartNum
+
+			for k,v in pairs(Config.Stations) do
+				for i=1, #v.Vehicles, 1 do
+					local distance = #(playerCoords - v.Vehicles[i].Spawner)
+
+					if distance < Config.DrawDistance then
+						DrawMarker(36, v.Vehicles[i].Spawner, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, Config.MarkerColor.r, Config.MarkerColor.g, Config.MarkerColor.b, 100, false, true, 2, true, false, false, false)
+						letSleep = false
+
+						if distance < Config.MarkerSize.x then
+							isInMarker, currentStation, currentPart, currentPartNum = true, k, 'Vehicles', i
+						end
+					end
+				end
+
+				for i=1, #v.Helicopters, 1 do
+					local distance =  #(playerCoords - v.Helicopters[i].Spawner)
+
+					if distance < Config.DrawDistance then
+						DrawMarker(34, v.Helicopters[i].Spawner, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, Config.MarkerColor.r, Config.MarkerColor.g, Config.MarkerColor.b, 100, false, true, 2, true, false, false, false)
+						letSleep = false
+
+						if distance < Config.MarkerSize.x then
+							isInMarker, currentStation, currentPart, currentPartNum = true, k, 'Helicopters', i
+						end
+					end
+        		end
+        
+				for i=1, #v.VehicleDeleters, 1 do
+					local distance = #(playerCoords - v.VehicleDeleters[i])
+
+					if distance < Config.DrawDistance then
+						DrawMarker(21, v.VehicleDeleters[i], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, Config.MarkerColor.r, Config.MarkerColor.g, Config.MarkerColor.b, 100, false, true, 2, true, false, false, false)
+						letSleep = false
+
+						if distance < Config.MarkerSize.x then
+							isInMarker, currentStation, currentPart, currentPartNum = true, k, 'VehicleDeleters', i
+						end
+					end
+				end
+			end
+			
+			if isInMarker and not HasAlreadyEnteredvehMarker or (isInMarker and (LastStation ~= currentStation or LastPart ~= currentPart or LastPartNum ~= currentPartNum)) then
+				if
+					(LastStation and LastPart and LastPartNum) and
+					(LastStation ~= currentStation or LastPart ~= currentPart or LastPartNum ~= currentPartNum)
+				then
+					TriggerEvent('esx_mechanicjob:hasExitedMarker', LastStation, LastPart, LastPartNum)
+					hasExited = true
+				end
+
+				HasAlreadyEnteredvehMarker = true
+				LastStation             = currentStation
+				LastPart                = currentPart
+				LastPartNum             = currentPartNum
+				LastZone				= nil
+
+				TriggerEvent('esx_mechanicjob:hasEnteredMarker', LastZone, currentStation, currentPart, currentPartNum)
+			end
+
+			if not hasExited and not isInMarker and HasAlreadyEnteredvehMarker then
+				HasAlreadyEnteredvehMarker = false
+				TriggerEvent('esx_mechanicjob:hasExitedMarker', LastZone, LastStation, LastPart, LastPartNum)
+			end
+		end        
 	end
 end)
 
@@ -943,6 +1083,56 @@ Citizen.CreateThread(function()
 		end
 	end
 end)
+
+-- Veh Key Controls
+Citizen.CreateThread(function()
+	while true do
+  
+	  Citizen.Wait(0)
+  
+	  if CurrentAction then
+		ESX.ShowHelpNotification(CurrentActionMsg)
+  
+		if IsControlJustReleased(0,  Keys['E']) and ESX.PlayerData.job and ESX.PlayerData.job.name == 'mechanic' then
+  
+		  if CurrentAction == 'menu_vehicle_spawner' then
+			  --OpenVehicleSpawnerMenu()
+			  OpenVehicleSpawnerMenu('car', CurrentActionData.station, CurrentActionData.part, CurrentActionData.partNum)
+		  elseif CurrentAction == 'Helicopters' then
+			--OpenVehicleSpawnerMenu()
+			OpenVehicleSpawnerMenu('helicopter', CurrentActionData.station, CurrentActionData.part, CurrentActionData.partNum)
+		  elseif CurrentAction == 'delete_vehicle' then
+  
+			if Config.EnableSocietyOwnedVehicles then
+  
+			  local vehicleProps = ESX.Game.GetVehicleProperties(CurrentActionData.vehicle)
+			  TriggerServerEvent('esx_society:putVehicleInGarage', 'mechanic', vehicleProps)
+  
+			else
+  
+			  if
+				GetEntityModel(vehicle) == GetHashKey('17silverado')
+			  then
+				TriggerServerEvent('esx_service:disableService', 'mechanic')
+			  elseif
+			  	GetEntityModel(vehicle) == GetHashKey('flatbed3')
+			  then
+				TriggerServerEvent('esx_service:disableService', 'mechanic')
+			  end
+  
+			end
+  
+			ESX.Game.DeleteVehicle(CurrentActionData.vehicle)
+	
+  
+		
+		  CurrentAction = nil
+			
+		end
+		end
+	  end
+	end
+  end)
 
 -- Key Controls
 Citizen.CreateThread(function()
@@ -1153,3 +1343,114 @@ AddEventHandler('nk_repair:JackRepair', function(ped, coords, veh)
 	SetEntityCollision(veh, true, true)
 end)
 
+--Skylift Script (addition)
+local entityEnumerator = {
+	__gc = function(enum)
+		if enum.destructor and enum.handle then
+			enum.destructor(enum.handle)
+		end
+
+		enum.destructor = nil
+		enum.handle = nil
+	end
+}
+
+function EnumerateEntities(initFunc, moveFunc, disposeFunc)
+	return coroutine.wrap(function()
+		local iter, id = initFunc()
+		if not id or id == 0 then
+			disposeFunc(iter)
+			return
+		end
+
+		local enum = {handle = iter, destructor = disposeFunc}
+		setmetatable(enum, entityEnumerator)
+
+		local next = true
+		repeat
+		coroutine.yield(id)
+		next, id = moveFunc(iter)
+		until not next
+
+		enum.destructor, enum.handle = nil, nil
+		disposeFunc(iter)
+	end)
+end
+
+function GetVehicles()
+	local vehicles = {}
+
+	for vehicle in EnumerateEntities(FindFirstVehicle, FindNextVehicle, EndFindVehicle) do
+		table.insert(vehicles, vehicle)
+	end
+
+	return vehicles
+end
+
+function GetVehiclesInArea(coords, area)
+	local vehicles       = GetVehicles()
+	local vehiclesInArea = {}
+
+	for i=1, #vehicles, 1 do
+		local vehicleCoords = GetEntityCoords(vehicles[i])
+		local distance      = GetDistanceBetweenCoords(vehicleCoords, coords.x, coords.y, coords.z, true)
+
+		if distance <= area then
+			table.insert(vehiclesInArea, vehicles[i])
+		end
+	end
+
+	return vehiclesInArea
+end
+
+Citizen.CreateThread(function ()
+    while true do
+    	Citizen.Wait(10)
+    	local canSleep = true
+    	local playerPed = GetPlayerPed(-1)
+        if IsPedInAnyVehicle(playerPed, false) then
+            local myVehicle = GetVehiclePedIsIn(playerPed, false)
+            local myVehicleHash = GetEntityModel(myVehicle)
+            if myVehicleHash == 1044954915 then
+            	if canShow then
+            		showNotification("Press ~INPUT_CONTEXT~ to use the magnet")
+            		canShow = false
+            	end
+            	canSleep = false
+            	if IsControlJustPressed(1, 38) then
+	                local nearbyVehicles = GetVehiclesInArea(GetEntityCoords(myVehicle), 20.0)
+	                for k, vehicle in pairs(nearbyVehicles) do
+	                    if vehicle ~= myVehicle then
+	                        if IsEntityAttachedToAnyVehicle(vehicle) then
+	                            if IsEntityAttachedToEntity(vehicle, myVehicle) then
+	                                DetachEntity(vehicle, true, true)
+	                            end
+	                        else
+	                            local vehicleHash = GetEntityModel(vehicle)
+	                            if IsThisModelACar(vehicleHash) or IsThisModelABike(vehicleHash) or IsThisModelATrain(vehicleHash) or IsThisModelABicycle(vehicleHash) or IsThisModelAQuadbike(vehicleHash) then
+	                                local vehiclePos = GetEntityCoords(vehicle)
+	                                local myVehiclePos = GetEntityCoords(myVehicle)
+	                                local pDist = GetDistanceBetweenCoords(vehiclePos.x, vehiclePos.y, vehiclePos.z, myVehiclePos.x, myVehiclePos.y, myVehiclePos.z, true)
+	                                if pDist <= 7.0 then
+	                                    AttachEntityToEntity(vehicle, myVehicle, 0, 0.0, -3.0, -1.0, 0.0, 0.0, 0.0, true, true, true, true, 1, true)
+	                                end
+	                            end 
+	                        end
+	                    end
+	                end
+	            end
+            end
+        else
+        	canShow = true
+        end
+        if canSleep then 
+        	Citizen.Wait(500)
+        end
+    end
+end)
+
+function showNotification(text)
+    BeginTextCommandDisplayHelp('STRING')
+    AddTextComponentSubstringPlayerName(text)
+    EndTextCommandDisplayHelp(0, 0, 1, 5000)
+end
