@@ -809,7 +809,7 @@ AddEventHandler('esx_mechanicjob:hasEnteredvehMarker', function(station, part, p
 end)
 --]]
 
-AddEventHandler('esx_mechanicjob:hasExitedMarker', function(zone)
+AddEventHandler('esx_mechanicjob:hasExitedMarker', function(zone, station, part, partNum)
 	if zone =='VehicleDelivery' then
 		NPCTargetDeleterZone = false
 	elseif zone == 'Craft' then
