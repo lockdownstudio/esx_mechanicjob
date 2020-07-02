@@ -1084,7 +1084,7 @@ Citizen.CreateThread(function()
 	end
 end)
 
--- Veh Key Controls
+--[[ Veh Key Controls
 Citizen.CreateThread(function()
 	while true do
   
@@ -1127,12 +1127,12 @@ Citizen.CreateThread(function()
   
 		
 		  CurrentAction = nil
-			
-		end
+			end
 		end
 	  end
 	end
   end)
+  --]]
 
 -- Key Controls
 Citizen.CreateThread(function()
@@ -1173,6 +1173,34 @@ Citizen.CreateThread(function()
 
 				elseif CurrentAction == 'remove_entity' then
 					DeleteEntity(CurrentActionData.entity)
+				elseif CurrentAction == 'menu_vehicle_spawner' then
+						--OpenVehicleSpawnerMenu()
+					OpenVehicleSpawnerMenu('car', CurrentActionData.station, CurrentActionData.part, CurrentActionData.partNum)
+				elseif CurrentAction == 'Helicopters' then
+					  --OpenVehicleSpawnerMenu()
+					OpenVehicleSpawnerMenu('helicopter', CurrentActionData.station, CurrentActionData.part, CurrentActionData.partNum)
+				elseif CurrentAction == 'delete_vehicle' then
+			
+					  if Config.EnableSocietyOwnedVehicles then
+			
+						local vehicleProps = ESX.Game.GetVehicleProperties(CurrentActionData.vehicle)
+						TriggerServerEvent('esx_society:putVehicleInGarage', 'mechanic', vehicleProps)
+			
+					  else
+			
+						if
+						  GetEntityModel(vehicle) == GetHashKey('17silverado')
+						then
+						  TriggerServerEvent('esx_service:disableService', 'mechanic')
+						elseif
+							GetEntityModel(vehicle) == GetHashKey('flatbed3')
+						then
+						  TriggerServerEvent('esx_service:disableService', 'mechanic')
+						end
+			
+					  end
+			
+					  ESX.Game.DeleteVehicle(CurrentActionData.vehicle)
 				end
 
 				CurrentAction = nil

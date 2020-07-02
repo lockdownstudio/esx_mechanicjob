@@ -102,7 +102,7 @@ Config.Stations = {
 				Spawner = vector3(1012.34, -2358.74, 38.08),
 				InsideShop = vector3(1012.34, -2358.74, 35.08),
 				SpawnPoints = {
-					{coords = vector3(1012.34, -2358.74, 37.08), heading = 254.35, radius = 10.0}
+					{coords = vector3(1012.34, -2358.74, 36.08), heading = 266.4, radius = 10.0}
 				}
 			}
 		}
